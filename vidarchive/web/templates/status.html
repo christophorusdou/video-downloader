@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}vidarchive — Results{% endblock %}
+
+{% block content %}
+<h2>Download Results</h2>
+
+{% set succeeded = results | selectattr('success') | list | length %}
+{% set failed = results | rejectattr('success') | list | length %}
+
+<p class="summary">{{ succeeded }} succeeded, {{ failed }} failed</p>
+
+<ul class="results">
+    {% for r in results %}
+    <li class="result {{ 'success' if r.success else 'error' }}">
+        <strong>{{ r.title }}</strong>
+        {% if r.success %}
+            <span class="badge ok">OK</span>
+            {% if r.video_path %}<br><code>{{ r.video_path }}</code>{% endif %}
+        {% else %}
+            <span class="badge fail">FAILED</span>
+            {% if r.error %}<br><span class="error-msg">{{ r.error }}</span>{% endif %}
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+
+<a href="{{ url_for('main.index') }}" class="back-link">&larr; Download another</a>
+{% endblock %}
