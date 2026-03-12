@@ -63,16 +63,21 @@ input[type="url"]:focus {
     border-color: #e94560;
 }
 
-.checkbox-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #333;
+    border-radius: 4px;
+    background: #0f3460;
+    color: #e0e0e0;
+    font-size: 1rem;
     margin-bottom: 1.5rem;
+    cursor: pointer;
 }
 
-.checkbox-row label {
-    margin-bottom: 0;
-    font-weight: normal;
+select:focus {
+    outline: none;
+    border-color: #e94560;
 }
 
 button {

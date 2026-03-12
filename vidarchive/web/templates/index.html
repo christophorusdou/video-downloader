@@ -7,10 +7,12 @@
     <label for="url">YouTube URL</label>
     <input type="url" id="url" name="url" placeholder="https://www.youtube.com/watch?v=..." required>
 
-    <div class="checkbox-row">
-        <input type="checkbox" id="playlist" name="playlist">
-        <label for="playlist">This is a playlist</label>
-    </div>
+    <label for="mode">Download type</label>
+    <select id="mode" name="mode">
+        <option value="video">Single video</option>
+        <option value="playlist">Playlist</option>
+        <option value="channel">Entire channel</option>
+    </select>
 
     <button type="submit">Download</button>
 

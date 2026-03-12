@@ -25,7 +25,7 @@ def index():
 def download():
     """Accept a URL and download the video/playlist."""
     url = request.form.get("url", "").strip()
-    is_playlist = request.form.get("playlist") == "on"
+    mode = request.form.get("mode", "video")
 
     if not url:
         flash("Please enter a URL.")
@@ -33,8 +33,10 @@ def download():
 
     dl = Downloader(current_app.config["OUTPUT_DIR"])
 
-    if is_playlist:
+    if mode == "playlist":
         results = dl.download_playlist(url)
+    elif mode == "channel":
+        results = dl.download_channel(url)
     else:
         results = [dl.download_video(url)]
 

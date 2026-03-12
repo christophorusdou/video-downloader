@@ -53,8 +53,12 @@ class Downloader:
         opts = self._get_ydl_opts(is_playlist=False)
         return self._do_download(url, opts)
 
+    def download_channel(self, url: str) -> list[DownloadResult]:
+        """Download all videos from a channel."""
+        return self.download_playlist(url)
+
     def download_playlist(self, url: str) -> list[DownloadResult]:
-        """Download all videos in a playlist."""
+        """Download all videos in a playlist or channel."""
         opts = self._get_ydl_opts(is_playlist=True)
         results: list[DownloadResult] = []
 

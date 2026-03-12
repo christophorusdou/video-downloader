@@ -64,6 +64,33 @@ def playlist(url, output_dir):
 
 
 @main.command()
+@click.argument("url")
+@click.option(
+    "-o",
+    "--output-dir",
+    default="./downloads",
+    type=click.Path(),
+    help="Output directory for downloaded videos.",
+)
+def channel(url, output_dir):
+    """Download all videos from a YouTube channel."""
+    dl = Downloader(output_dir)
+    click.echo(f"Downloading channel: {url}")
+    results = dl.download_channel(url)
+
+    succeeded = sum(1 for r in results if r.success)
+    failed = sum(1 for r in results if not r.success)
+
+    click.echo(f"\nDone: {succeeded} downloaded, {failed} failed")
+
+    for r in results:
+        if r.success:
+            click.echo(f"  OK: {r.title}")
+        else:
+            click.echo(f"  FAIL: {r.error}", err=True)
+
+
+@main.command()
 @click.option(
     "-p", "--port", default=5000, type=int, help="Port to run the web UI on."
 )
