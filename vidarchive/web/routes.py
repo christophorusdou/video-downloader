@@ -31,7 +31,10 @@ def download():
         flash("Please enter a URL.")
         return redirect(url_for("main.index"))
 
-    dl = Downloader(current_app.config["OUTPUT_DIR"])
+    dl = Downloader(
+        current_app.config["OUTPUT_DIR"],
+        cookies_from_browser=current_app.config.get("COOKIES_FROM_BROWSER"),
+    )
 
     if mode == "playlist":
         results = dl.download_playlist(url)

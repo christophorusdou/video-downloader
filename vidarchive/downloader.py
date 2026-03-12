@@ -25,16 +25,17 @@ class DownloadResult:
 class Downloader:
     """Downloads YouTube videos and playlists using yt-dlp."""
 
-    def __init__(self, output_dir: str = "./downloads"):
+    def __init__(self, output_dir: str = "./downloads", cookies_from_browser: str | None = None):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.cookies_from_browser = cookies_from_browser
 
     def _get_ydl_opts(self, *, is_playlist: bool = False) -> dict:
         """Build yt-dlp options dict."""
         outtmpl = str(
             self.output_dir / "%(uploader)s" / "%(title)s [%(id)s].%(ext)s"
         )
-        return {
+        opts = {
             "format": "bestvideo+bestaudio/best",
             "merge_output_format": "mkv",
             "outtmpl": outtmpl,
@@ -47,6 +48,9 @@ class Downloader:
             "quiet": False,
             "no_warnings": False,
         }
+        if self.cookies_from_browser:
+            opts["cookiesfrombrowser"] = (self.cookies_from_browser,)
+        return opts
 
     def download_video(self, url: str) -> DownloadResult:
         """Download a single video at best quality with metadata."""

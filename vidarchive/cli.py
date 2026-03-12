@@ -4,6 +4,13 @@ import click
 
 from .downloader import Downloader
 
+COOKIES_OPTION = click.option(
+    "-c",
+    "--cookies-from-browser",
+    default=None,
+    help="Browser to extract cookies from (chrome, firefox, edge, safari, brave).",
+)
+
 
 @click.group()
 def main():
@@ -19,9 +26,10 @@ def main():
     type=click.Path(),
     help="Output directory for downloaded videos.",
 )
-def video(url, output_dir):
+@COOKIES_OPTION
+def video(url, output_dir, cookies_from_browser):
     """Download a single YouTube video."""
-    dl = Downloader(output_dir)
+    dl = Downloader(output_dir, cookies_from_browser=cookies_from_browser)
     click.echo(f"Downloading video: {url}")
     result = dl.download_video(url)
 
@@ -45,9 +53,10 @@ def video(url, output_dir):
     type=click.Path(),
     help="Output directory for downloaded videos.",
 )
-def playlist(url, output_dir):
+@COOKIES_OPTION
+def playlist(url, output_dir, cookies_from_browser):
     """Download all videos in a YouTube playlist."""
-    dl = Downloader(output_dir)
+    dl = Downloader(output_dir, cookies_from_browser=cookies_from_browser)
     click.echo(f"Downloading playlist: {url}")
     results = dl.download_playlist(url)
 
@@ -72,9 +81,10 @@ def playlist(url, output_dir):
     type=click.Path(),
     help="Output directory for downloaded videos.",
 )
-def channel(url, output_dir):
+@COOKIES_OPTION
+def channel(url, output_dir, cookies_from_browser):
     """Download all videos from a YouTube channel."""
-    dl = Downloader(output_dir)
+    dl = Downloader(output_dir, cookies_from_browser=cookies_from_browser)
     click.echo(f"Downloading channel: {url}")
     results = dl.download_channel(url)
 
@@ -101,10 +111,11 @@ def channel(url, output_dir):
     type=click.Path(),
     help="Output directory for downloaded videos.",
 )
-def serve(port, output_dir):
+@COOKIES_OPTION
+def serve(port, output_dir, cookies_from_browser):
     """Start the web UI."""
     from .web import create_app
 
-    app = create_app(output_dir)
+    app = create_app(output_dir, cookies_from_browser=cookies_from_browser)
     click.echo(f"Starting web UI on http://localhost:{port}")
     app.run(host="0.0.0.0", port=port, debug=True)

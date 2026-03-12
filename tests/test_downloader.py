@@ -85,3 +85,17 @@ class TestDownloader:
 
             pp_keys = [pp["key"] for pp in opts["postprocessors"]]
             assert "FFmpegThumbnailsConvertor" in pp_keys
+
+    def test_ydl_opts_no_cookies_by_default(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dl = Downloader(tmpdir)
+            opts = dl._get_ydl_opts()
+
+            assert "cookiesfrombrowser" not in opts
+
+    def test_ydl_opts_with_cookies_from_browser(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dl = Downloader(tmpdir, cookies_from_browser="chrome")
+            opts = dl._get_ydl_opts()
+
+            assert opts["cookiesfrombrowser"] == ("chrome",)
