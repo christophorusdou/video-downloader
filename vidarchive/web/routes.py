@@ -26,6 +26,7 @@ def download():
     """Accept a URL and download the video/playlist."""
     url = request.form.get("url", "").strip()
     mode = request.form.get("mode", "video")
+    browser = request.form.get("browser", "").strip() or None
 
     if not url:
         flash("Please enter a URL.")
@@ -33,7 +34,7 @@ def download():
 
     dl = Downloader(
         current_app.config["OUTPUT_DIR"],
-        cookies_from_browser=current_app.config.get("COOKIES_FROM_BROWSER"),
+        cookies_from_browser=browser,
     )
 
     if mode == "playlist":
