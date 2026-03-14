@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -25,10 +26,18 @@ class DownloadResult:
 class Downloader:
     """Downloads YouTube videos and playlists using yt-dlp."""
 
-    def __init__(self, output_dir: str = "./downloads", cookies_from_browser: str | None = None):
+    MIN_FREE_GB = 20
+
+    def __init__(
+        self,
+        output_dir: str = "./downloads",
+        cookies_from_browser: str | None = None,
+        cookies_file: str | None = None,
+    ):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.cookies_from_browser = cookies_from_browser
+        self.cookies_file = cookies_file
 
     def _get_ydl_opts(self, *, is_playlist: bool = False) -> dict:
         """Build yt-dlp options dict."""
@@ -48,12 +57,32 @@ class Downloader:
             "quiet": False,
             "no_warnings": False,
         }
-        if self.cookies_from_browser:
+        if self.cookies_file and Path(self.cookies_file).is_file():
+            opts["cookiefile"] = self.cookies_file
+        elif self.cookies_from_browser:
             opts["cookiesfrombrowser"] = (self.cookies_from_browser,)
         return opts
 
+    def _check_disk_space(self) -> str | None:
+        """Return an error message if disk space is below threshold, else None."""
+        usage = shutil.disk_usage(self.output_dir)
+        free_gb = usage.free / (1024**3)
+        if free_gb < self.MIN_FREE_GB:
+            return f"Low disk space: {free_gb:.1f} GB free (minimum {self.MIN_FREE_GB} GB required)"
+        return None
+
     def download_video(self, url: str) -> DownloadResult:
         """Download a single video at best quality with metadata."""
+        if error := self._check_disk_space():
+            return DownloadResult(
+                title="Unknown",
+                video_path=None,
+                metadata_path=None,
+                thumbnail_path=None,
+                url=url,
+                success=False,
+                error=error,
+            )
         opts = self._get_ydl_opts(is_playlist=False)
         return self._do_download(url, opts)
 
@@ -63,6 +92,18 @@ class Downloader:
 
     def download_playlist(self, url: str) -> list[DownloadResult]:
         """Download all videos in a playlist or channel."""
+        if error := self._check_disk_space():
+            return [
+                DownloadResult(
+                    title="Playlist",
+                    video_path=None,
+                    metadata_path=None,
+                    thumbnail_path=None,
+                    url=url,
+                    success=False,
+                    error=error,
+                )
+            ]
         opts = self._get_ydl_opts(is_playlist=True)
         results: list[DownloadResult] = []
 

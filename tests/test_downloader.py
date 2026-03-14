@@ -2,6 +2,7 @@
 
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 from vidarchive.downloader import DownloadResult, Downloader
 
@@ -99,3 +100,82 @@ class TestDownloader:
             opts = dl._get_ydl_opts()
 
             assert opts["cookiesfrombrowser"] == ("chrome",)
+
+    def test_ydl_opts_with_cookies_file(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cookies_path = Path(tmpdir) / "cookies.txt"
+            cookies_path.write_text("# Netscape HTTP Cookie File\n")
+
+            dl = Downloader(tmpdir, cookies_file=str(cookies_path))
+            opts = dl._get_ydl_opts()
+
+            assert opts["cookiefile"] == str(cookies_path)
+            assert "cookiesfrombrowser" not in opts
+
+    def test_ydl_opts_cookies_file_takes_precedence(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cookies_path = Path(tmpdir) / "cookies.txt"
+            cookies_path.write_text("# Netscape HTTP Cookie File\n")
+
+            dl = Downloader(
+                tmpdir,
+                cookies_from_browser="chrome",
+                cookies_file=str(cookies_path),
+            )
+            opts = dl._get_ydl_opts()
+
+            assert opts["cookiefile"] == str(cookies_path)
+            assert "cookiesfrombrowser" not in opts
+
+    def test_ydl_opts_cookies_file_missing_falls_back(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dl = Downloader(
+                tmpdir,
+                cookies_from_browser="chrome",
+                cookies_file="/nonexistent/cookies.txt",
+            )
+            opts = dl._get_ydl_opts()
+
+            assert "cookiefile" not in opts
+            assert opts["cookiesfrombrowser"] == ("chrome",)
+
+    def test_ydl_opts_no_cookies_file_by_default(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dl = Downloader(tmpdir)
+            opts = dl._get_ydl_opts()
+
+            assert "cookiefile" not in opts
+
+    def test_disk_space_check_passes_normally(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dl = Downloader(tmpdir)
+            assert dl._check_disk_space() is None
+
+    def test_disk_space_check_fails_when_low(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dl = Downloader(tmpdir)
+            # Mock disk_usage to return very low free space (1 GB)
+            mock_usage = type("Usage", (), {"free": 1 * (1024**3)})()
+            with patch("vidarchive.downloader.shutil.disk_usage", return_value=mock_usage):
+                error = dl._check_disk_space()
+                assert error is not None
+                assert "Low disk space" in error
+
+    def test_download_video_refuses_on_low_disk(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dl = Downloader(tmpdir)
+            mock_usage = type("Usage", (), {"free": 1 * (1024**3)})()
+            with patch("vidarchive.downloader.shutil.disk_usage", return_value=mock_usage):
+                result = dl.download_video("https://youtube.com/watch?v=test")
+                assert result.success is False
+                assert "Low disk space" in result.error
+
+    def test_download_playlist_refuses_on_low_disk(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dl = Downloader(tmpdir)
+            mock_usage = type("Usage", (), {"free": 1 * (1024**3)})()
+            with patch("vidarchive.downloader.shutil.disk_usage", return_value=mock_usage):
+                results = dl.download_playlist("https://youtube.com/playlist?list=test")
+                assert len(results) == 1
+                assert results[0].success is False
+                assert "Low disk space" in results[0].error

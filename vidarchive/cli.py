@@ -112,10 +112,20 @@ def channel(url, output_dir, cookies_from_browser):
     help="Output directory for downloaded videos.",
 )
 @COOKIES_OPTION
-def serve(port, output_dir, cookies_from_browser):
+@click.option(
+    "--cookies-file",
+    default=None,
+    type=click.Path(),
+    help="Path to a Netscape-format cookies.txt file (for Docker/server use).",
+)
+def serve(port, output_dir, cookies_from_browser, cookies_file):
     """Start the web UI."""
     from .web import create_app
 
-    app = create_app(output_dir, cookies_from_browser=cookies_from_browser)
+    app = create_app(
+        output_dir,
+        cookies_from_browser=cookies_from_browser,
+        cookies_file=cookies_file,
+    )
     click.echo(f"Starting web UI on http://localhost:{port}")
     app.run(host="0.0.0.0", port=port, debug=True)
